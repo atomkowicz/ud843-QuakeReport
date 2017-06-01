@@ -15,24 +15,6 @@
  */
 package com.example.android.quakereport;
 
-//import android.app.LoaderManager;
-//import android.content.Context;
-//import android.content.Intent;
-//import android.content.Loader;
-//import android.net.Uri;
-////import android.os.AsyncTask;
-//import android.os.Bundle;
-//import android.content.AsyncTaskLoader;
-//import android.support.v7.app.AppCompatActivity;
-//import android.view.View;
-//import android.widget.AdapterView;
-//import android.widget.ListView;
-//import android.app.LoaderManager;
-//import android.app.LoaderManager.LoaderCallbacks;
-//import java.util.ArrayList;
-//import java.util.List;
-
-
 import android.app.LoaderManager;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.content.Intent;
@@ -50,14 +32,41 @@ import java.util.List;
 
 public class EarthquakeActivity extends AppCompatActivity implements LoaderCallbacks<List<Earthquake>> {
 
-    private static final String QUAKE_URL = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2016-01-01&endtime=2016-05-02&minfelt=50&minmagnitude=5";
-    //private static final String QUAKE_URL = "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&minmag=6&limit=10";
-    //private ArrayList<Earthquake> earthquakes;
+    private static final String LOG_TAG = EarthquakeActivity.class.getName();
+    private static final String QUAKE_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson";
     private static final int EARTHQUAKE_LOADER_ID = 1;
-
     private EarthquakeAdapter mAdapter;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.earthquake_activity);
 
+        // Create a new adapter that takes an empty list of earthquakes as input
+        mAdapter = new EarthquakeAdapter(this, new ArrayList<Earthquake>());
+        ListView earthquakeListView = (ListView) findViewById(R.id.list);
+        earthquakeListView.setAdapter(mAdapter);
+
+        earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                // Find the current earthquake that was clicked on
+                Earthquake currentEarthquake = (Earthquake) mAdapter.getItem(position);
+
+                // Convert the String URL into a URI object (to pass into the Intent constructor)
+                Uri earthquakeUri = Uri.parse(currentEarthquake.getUrl());
+
+                // Create a new intent to view the earthquake URI
+                Intent websiteIntent = new Intent(Intent.ACTION_VIEW, earthquakeUri);
+
+                // Send the intent to launch a new activity
+                startActivity(websiteIntent);
+            }
+        });
+
+        LoaderManager loaderManager = getLoaderManager();
+        loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
+    }
 
     @Override
     public Loader<List<Earthquake>> onCreateLoader(int i, Bundle bundle) {
@@ -81,91 +90,5 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
     public void onLoaderReset(Loader<List<Earthquake>> loader) {
         //updateUi(new ArrayList<Earthquake>());
         mAdapter.clear();
-    }
-
-
-
-
-
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.earthquake_activity);
-
-        LoaderManager loaderManager = getLoaderManager();
-
-        //new EarthquakeAsyncTask().execute(QUAKE_URL);
-        loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
-    }
-
-
-
-//    private class EarthquakeAsyncTask extends AsyncTask<String, Void, ArrayList<Earthquake>> {
-//
-//        @Override
-//        protected ArrayList<Earthquake> doInBackground(String... urls) {
-//
-//            // Don't perform the request if there are no URLs, or the first URL is null.
-//            if (urls.length < 1 || urls[0] == null) {
-//                return null;
-//            }
-//            // Perform the HTTP request for earthquake data and process the response.
-//            ArrayList<Earthquake> results = QueryUtils.fetchEarthquakeData(urls[0]);
-//            return results;
-//        }
-//
-//        @Override
-//        protected void onPostExecute(ArrayList<Earthquake> results) {
-//
-//            // If there is no result, do nothing.
-//            if (results == null) {
-//                return;
-//            }
-//            // Update the information displayed to the user.
-//            updateUi(results);
-//        }
-//
-//    }
-//
-//
-    /**
-     * Update the UI with the given earthquake information.
-     */
-    private void updateUi(List<Earthquake> earthquakes) {
-
-        final List<Earthquake> eq = earthquakes;
-
-        // Create a new {@link ArrayAdapter} of earthquakes
-        mAdapter = new EarthquakeAdapter(this, earthquakes);
-
-        mAdapter.clear();
-
-        // Find a reference to the {@link ListView} in the layout
-        ListView earthquakeListView = (ListView) findViewById(R.id.list);
-
-        // Set the adapter on the {@link ListView}
-        // so the list can be populated in the user interface
-        earthquakeListView.setAdapter(mAdapter);
-
-        earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                // Find the current earthquake that was clicked on
-
-                EarthquakeAdapter adapter = new EarthquakeAdapter(getApplicationContext(), eq);
-
-                Earthquake currentEarthquake = (Earthquake) adapter.getItem(position);
-
-                // Convert the String URL into a URI object (to pass into the Intent constructor)
-                Uri earthquakeUri = Uri.parse(currentEarthquake.getUrl());
-
-                // Create a new intent to view the earthquake URI
-                Intent websiteIntent = new Intent(Intent.ACTION_VIEW, earthquakeUri);
-
-                // Send the intent to launch a new activity
-                startActivity(websiteIntent);
-            }
-        });
     }
 }
