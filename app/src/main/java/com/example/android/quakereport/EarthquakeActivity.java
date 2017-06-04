@@ -26,6 +26,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,7 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
     private static final String QUAKE_URL = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson";
     private static final int EARTHQUAKE_LOADER_ID = 1;
     private EarthquakeAdapter mAdapter;
+    private TextView emptyStateView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +52,9 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
         mAdapter = new EarthquakeAdapter(this, new ArrayList<Earthquake>());
         ListView earthquakeListView = (ListView) findViewById(R.id.list);
         earthquakeListView.setAdapter(mAdapter);
+
+        emptyStateView = (TextView) findViewById(R.id.empty);
+        earthquakeListView.setEmptyView(emptyStateView);
 
         earthquakeListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -81,6 +87,11 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
     @Override
     public void onLoadFinished(Loader<List<Earthquake>> loader, List<Earthquake> earthquakes) {
 
+        emptyStateView.setText(R.string.no_earthquakes);
+
+        View spinner = findViewById(R.id.loading_spinner);
+        spinner.setVisibility(View.GONE);
+
         Log.i(LOG_TAG, "test: onLoadFinished() called");
 
         // Clear the adapter of previous earthquake data
@@ -91,12 +102,12 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
         if (earthquakes != null && !earthquakes.isEmpty()) {
             mAdapter.addAll(earthquakes);
         }
+
     }
 
     @Override
     public void onLoaderReset(Loader<List<Earthquake>> loader) {
         Log.i(LOG_TAG, "test: onLoaderReset() called");
-
         mAdapter.clear();
     }
 }
