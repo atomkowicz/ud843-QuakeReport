@@ -17,8 +17,11 @@ package com.example.android.quakereport;
 
 import android.app.LoaderManager;
 import android.app.LoaderManager.LoaderCallbacks;
+import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -40,6 +43,7 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
     private static final int EARTHQUAKE_LOADER_ID = 1;
     private EarthquakeAdapter mAdapter;
     private TextView emptyStateView;
+    View spinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,9 +77,29 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
             }
         });
 
-        LoaderManager loaderManager = getLoaderManager();
-        Log.i(LOG_TAG, "test: calling initLoader()");
-        loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
+
+        NetworkInfo activeNetwork = getActiveNetworkInfo();
+        boolean isConnected = activeNetwork != null &&
+                activeNetwork.isConnectedOrConnecting();
+
+        spinner = findViewById(R.id.loading_spinner);
+
+        if (isConnected) {
+            LoaderManager loaderManager = getLoaderManager();
+            Log.i(LOG_TAG, "test: calling initLoader()");
+            loaderManager.initLoader(EARTHQUAKE_LOADER_ID, null, this);
+        } else {
+            emptyStateView.setText(R.string.no_internet_connection);
+            spinner.setVisibility(View.GONE);
+        }
+
+    }
+
+    public NetworkInfo getActiveNetworkInfo() {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        return networkInfo;
     }
 
     @Override
@@ -89,7 +113,6 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderCallb
 
         emptyStateView.setText(R.string.no_earthquakes);
 
-        View spinner = findViewById(R.id.loading_spinner);
         spinner.setVisibility(View.GONE);
 
         Log.i(LOG_TAG, "test: onLoadFinished() called");
